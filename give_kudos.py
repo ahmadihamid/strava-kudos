@@ -6,7 +6,7 @@ from playwright.sync_api import sync_playwright, TimeoutError
 BASE_URL = "https://www.strava.com/"
 
 class StravaAutomator:
-    def __init__(self, max_run_duration=600, max_wait_suggest=5) -> None:  
+    def __init__(self, max_run_duration=540, max_wait_suggest=5) -> None:  
         self.EMAIL = os.environ.get('STRAVA_EMAIL')
         self.PASSWORD = os.environ.get('STRAVA_PASSWORD')
 
@@ -189,7 +189,7 @@ class StravaAutomator:
 
 
 def main():
-    automator = StravaAutomator(max_run_duration=600, max_wait_suggest=5)
+    automator = StravaAutomator(max_run_duration=540, max_wait_suggest=5)
     try:
         automator.email_login()
         automator.run_automation()
