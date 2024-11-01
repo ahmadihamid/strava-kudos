@@ -1,19 +1,17 @@
 import os
 import time
-
 from playwright.sync_api import sync_playwright, TimeoutError
 
 BASE_URL = "https://www.strava.com/"
 
 class StravaAutomator:
-    def __init__(self, max_run_duration=540, max_wait_suggest=5) -> None:  
+    def __init__(self, max_run_duration=600, max_wait_suggest=5) -> None:  
         self.EMAIL = os.environ.get('STRAVA_EMAIL')
         self.PASSWORD = os.environ.get('STRAVA_PASSWORD')
 
         if self.EMAIL is None or self.PASSWORD is None:
             raise Exception(f"Must set environ variables EMAIL AND PASSWORD. \
                 e.g. run export STRAVA_EMAIL=YOUR_EMAIL")
-
         self.max_run_duration = max_run_duration
         self.max_wait_suggest = max_wait_suggest
         self.start_time = time.time()
@@ -43,9 +41,20 @@ class StravaAutomator:
             self.email_login()
 
     def run_automation(self):
-        self.click_follow_buttons()
-        self.give_kudos()
+        self.give_kudos()  # Run kudos first
+        self.click_follow_buttons()  # Then run follow
 
+    def give_kudos(self):
+        print("\n---Starting to give kudos---")
+        try:
+            self._get_page_and_own_profile()
+            web_feed_entry_locator = self.page.locator(self.web_feed_entry_pattern)
+            self.locate_kudos_buttons_and_maybe_give_kudos(web_feed_entry_locator=web_feed_entry_locator)
+        except TimeoutError:
+            print("Timeout while loading feed - retrying...")
+            time.sleep(2)
+            self.give_kudos()
+            
     def click_follow_buttons(self):
         print("---Starting to follow users---")
         follows_count = 0
@@ -61,9 +70,9 @@ class StravaAutomator:
                     print("\nNo Follow buttons found. Waiting for new suggestions...")
                 
                 if time.time() - wait_start_time >= self.max_wait_suggest:
-                    print(f"No new suggestions after {self.max_wait_suggest} seconds. Moving to kudos...")
+                    print(f"No new suggestions after {self.max_wait_suggest} seconds. Exiting...")
                     return
-                    
+                
                 time.sleep(1)
                 continue
             else:
@@ -87,26 +96,13 @@ class StravaAutomator:
             
         print(f"\nFollow phase finished. Total follows: {follows_count}")
 
-    def give_kudos(self):
-        print("\n---Starting to give kudos---")
-        try:
-            self._get_page_and_own_profile()
-            web_feed_entry_locator = self.page.locator(self.web_feed_entry_pattern)
-            self.locate_kudos_buttons_and_maybe_give_kudos(web_feed_entry_locator=web_feed_entry_locator)
-        except TimeoutError:
-            print("Timeout while loading feed - retrying...")
-            time.sleep(2)
-            self.give_kudos()
-
     def _get_page_and_own_profile(self):
         try:
             self.page.goto(os.path.join(BASE_URL, f"dashboard?num_entries={self.num_entries}"), 
-                          wait_until='domcontentloaded')  # Changed wait_until condition
+                          wait_until='domcontentloaded')
             
-            # Wait for feed to load
             self.page.wait_for_selector(self.web_feed_entry_pattern, timeout=60000)
             
-            # Scroll for lazy loading elements
             for _ in range(5):
                 self.page.keyboard.press('PageDown')
                 time.sleep(0.5)
@@ -187,15 +183,13 @@ class StravaAutomator:
     def cleanup(self):
         self.browser.close()
 
-
 def main():
-    automator = StravaAutomator(max_run_duration=540, max_wait_suggest=5)
+    automator = StravaAutomator(max_run_duration=600, max_wait_suggest=5)
     try:
         automator.email_login()
         automator.run_automation()
     finally:
         automator.cleanup()
-
 
 if __name__ == "__main__":
     main()
