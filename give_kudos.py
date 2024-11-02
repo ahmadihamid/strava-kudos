@@ -70,7 +70,8 @@ class StravaAutomator:
                     print("\nNo Follow buttons found. Waiting for new suggestions...")
                 
                 if time.time() - wait_start_time >= self.max_wait_suggest:
-                    print(f"No new suggestions after {self.max_wait_suggest} seconds. Exiting...")
+                    print(f"\nNo new suggestions after {self.max_wait_suggest} seconds.")
+                    print(f"Total follows completed: {follows_count}")
                     return
                 
                 time.sleep(1)
@@ -80,8 +81,7 @@ class StravaAutomator:
                 
             for i in range(count):
                 if time.time() - self.start_time >= self.max_run_duration:
-                    print(f"\nTime limit reached. Total follows: {follows_count}")
-                    return
+                    break
                     
                 button = buttons.nth(i)
                 try:
@@ -94,7 +94,7 @@ class StravaAutomator:
                 
             time.sleep(0.5)
             
-        print(f"\nFollow phase finished. Total follows: {follows_count}")
+        print(f"\nFollow phase complete. Total follows: {follows_count}")
 
     def _get_page_and_own_profile(self):
         try:
