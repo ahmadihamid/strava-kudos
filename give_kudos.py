@@ -15,9 +15,9 @@ class StravaAutomator:
         self.max_run_duration = max_run_duration
         self.max_wait_suggest = max_wait_suggest
         self.start_time = time.time()
-        self.num_entries = 150
+        self.num_entries = 200
         self.web_feed_entry_pattern = '[data-testid=web-feed-entry]'
-        self.follow_button_pattern = '.packages-dashboard-ui-src-components-YourSuggestedFollows-YourSuggestedFollows-module__followButton--DPkgm'
+        self.follow_button_pattern = '.------packages-dashboard-ui-src-components-YourSuggestedFollows-YourSuggestedFollows-module__followButton--DPkgm'
 
         p = sync_playwright().start()
         self.browser = p.firefox.launch()
