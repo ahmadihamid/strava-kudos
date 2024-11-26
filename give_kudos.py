@@ -20,7 +20,7 @@ class KudosGiver:
 
         self.max_run_duration = max_run_duration
         self.start_time = time.time()
-        self.num_entries = 100
+        self.num_entries = 150
         self.web_feed_entry_pattern = '[data-testid=web-feed-entry]'
 
         p = sync_playwright().start()
