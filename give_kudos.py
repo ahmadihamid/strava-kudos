@@ -20,13 +20,14 @@ class KudosGiver:
 
         self.max_run_duration = max_run_duration
         self.start_time = time.time()
-        self.num_entries = 100
+        self.num_entries = 150
         self.web_feed_entry_pattern = '[data-testid=web-feed-entry]'
+        self.max_wait_suggest = 5  # maximum time (s) to wait for new suggestions
+        self.follow_button_pattern = '.------packages-dashboard-ui-src-components-YourSuggestedFollows-YourSuggestedFollows-module__followButton--DPkgm'  # pattern to locate Follow buttons
 
         p = sync_playwright().start()
         self.browser = p.firefox.launch() # does not work in chrome
         self.page = self.browser.new_page()
-
 
     def email_login(self):
         """
@@ -162,6 +163,47 @@ class KudosGiver:
             return 1
         return 0
 
+    def click_follow_buttons(self):
+        print("---Starting to follow users---")
+        follows_count = 0
+        wait_start_time = None
+        
+        while time.time() - self.start_time < self.max_run_duration:
+            buttons = self.page.locator(self.follow_button_pattern)
+            count = buttons.count()
+            
+            if count == 0:
+                if wait_start_time is None:
+                    wait_start_time = time.time()
+                    print("\nNo Follow buttons found. Waiting for new suggestions...")
+                
+                if time.time() - wait_start_time >= self.max_wait_suggest:
+                    print(f"\nNo new suggestions after {self.max_wait_suggest} seconds.")
+                    print(f"Total follows completed: {follows_count}")
+                    return
+                
+                time.sleep(1)
+                continue
+            else:
+                wait_start_time = None
+                
+            for i in range(count):
+                if time.time() - self.start_time >= self.max_run_duration:
+                    break
+                    
+                button = buttons.nth(i)
+                try:
+                    button.click(timeout=1000)
+                    follows_count += 1
+                    print("=", end="", flush=True)
+                    time.sleep(1)
+                except:
+                    continue
+                
+            time.sleep(0.5)
+            
+        print(f"\nFollow phase complete. Total follows: {follows_count}")
+
     def give_kudos(self):
         """
         Interate over web feed entries
@@ -180,6 +222,7 @@ class KudosGiver:
 def main():
     kg = KudosGiver()
     kg.email_login()
+    kg.click_follow_buttons()
     kg.give_kudos()
 
 
